@@ -2,7 +2,7 @@
 import torch
 import numpy as np
 from collections import OrderedDict
-from packnet_sfm.utils.horovod import reduce_value
+# from packnet_sfm.utils.horovod import reduce_value
 from packnet_sfm.utils.logging import prepare_dataset_prefix
 
 

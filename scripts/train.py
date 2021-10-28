@@ -1,13 +1,16 @@
 # Copyright 2020 Toyota Research Institute.  All rights reserved.
+import sys
+sys.path.append(".")
+print(sys.path)
 
 import argparse
 
 from packnet_sfm.models.model_wrapper import ModelWrapper
 from packnet_sfm.models.model_checkpoint import ModelCheckpoint
-from packnet_sfm.trainers.horovod_trainer import HorovodTrainer
+from packnet_sfm.trainers.base_trainer import BaseTrainer
 from packnet_sfm.utils.config import parse_train_file
 from packnet_sfm.utils.load import set_debug, filter_args_create
-from packnet_sfm.utils.horovod import hvd_init, rank
+# from packnet_sfm.utils.horovod import hvd_init, rank
 from packnet_sfm.loggers import WandbLogger
 
 
@@ -33,7 +36,7 @@ def train(file):
         **.ckpt** for a pre-trained checkpoint file.
     """
     # Initialize horovod
-    hvd_init()
+    # hvd_init()
 
     # Produce configuration and checkpoint from filename
     config, ckpt = parse_train_file(file)
@@ -46,14 +49,14 @@ def train(file):
         else filter_args_create(WandbLogger, config.wandb)
 
     # model checkpoint
-    checkpoint = None if config.checkpoint.filepath is '' or rank() > 0 else \
+    checkpoint = None if config.checkpoint.filepath == '' or rank() > 0 else \
         filter_args_create(ModelCheckpoint, config.checkpoint)
 
     # Initialize model wrapper
     model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger)
 
     # Create trainer with args.arch parameters
-    trainer = HorovodTrainer(**config.arch, checkpoint=checkpoint)
+    trainer = BaseTrainer(**config.arch, checkpoint=checkpoint)
 
     # Train model
     trainer.fit(model_wrapper)

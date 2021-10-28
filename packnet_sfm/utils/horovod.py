@@ -6,10 +6,10 @@ except ImportError:
     HAS_HOROVOD = False
 
 
-def hvd_init():
-    if HAS_HOROVOD:
-        hvd.init()
-    return HAS_HOROVOD
+# def hvd_init():
+#     if HAS_HOROVOD:
+#         hvd.init()
+#     return HAS_HOROVOD
 
 def on_rank_0(func):
     def wrapper(*args, **kwargs):
@@ -27,22 +27,22 @@ def world_size():
 def print0(string='\n'):
     print(string)
 
-def reduce_value(value, average, name):
-    """
-    Reduce the mean value of a tensor from all GPUs
+# def reduce_value(value, average, name):
+#     """
+#     Reduce the mean value of a tensor from all GPUs
 
-    Parameters
-    ----------
-    value : torch.Tensor
-        Value to be reduced
-    average : bool
-        Whether values will be averaged or not
-    name : str
-        Value name
+#     Parameters
+#     ----------
+#     value : torch.Tensor
+#         Value to be reduced
+#     average : bool
+#         Whether values will be averaged or not
+#     name : str
+#         Value name
 
-    Returns
-    -------
-    value : torch.Tensor
-        reduced value
-    """
-    return hvd.allreduce(value, average=average, name=name)
+#     Returns
+#     -------
+#     value : torch.Tensor
+#         reduced value
+#     """
+#     return hvd.allreduce(value, average=average, name=name)
