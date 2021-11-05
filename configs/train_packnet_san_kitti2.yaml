@@ -32,15 +32,14 @@ datasets:
     train:
         batch_size: 1
         dataset: ['KITTI']
-        path: ['./data/datasets/KITTI_raw']
-        split: ['data_splits/eigen_zhou_files.txt']
+        path: ['./data/datasets/KITTI_tiny']
+        split: ['kitti_tiny.txt']
         input_depth_type: ['velodyne']
         depth_type: ['groundtruth']
         repeat: [2]
     validation:
         dataset: ['KITTI']
-        path: ['./data/datasets/KITTI_raw']
-        split: ['data_splits/eigen_test_files.txt',
-                'data_splits/eigen_test_files.txt']
+        path: ['./data/datasets/KITTI_tiny']
+        split: ['kitti_tiny.txt']
         input_depth_type: ['velodyne','']
         depth_type: ['groundtruth','groundtruth']

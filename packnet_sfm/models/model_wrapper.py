@@ -217,7 +217,7 @@ class ModelWrapper(torch.nn.Module):
 
         # Calculate and reduce average loss and metrics per GPU
         loss_and_metrics = average_loss_and_metrics(output_batch, 'avg_train')
-        loss_and_metrics = reduce_dict(loss_and_metrics, to_item=True)
+        # loss_and_metrics = reduce_dict(loss_and_metrics, to_item=True) # Check this
 
         # Log to wandb
         if self.logger:
@@ -292,14 +292,17 @@ class ModelWrapper(torch.nn.Module):
         """Evaluate batch to produce depth metrics."""
         # Get predicted depth
         inv_depths = self.model(batch)['inv_depths']
-        depth = inv2depth(inv_depths[0])
+        # depth = inv2depth(inv_depths[0])
+        depth = inv2depth(inv_depths)
         # Post-process predicted depth
         batch['rgb'] = flip_lr(batch['rgb'])
         if 'input_depth' in batch:
             batch['input_depth'] = flip_lr(batch['input_depth'])
         inv_depths_flipped = self.model(batch)['inv_depths']
+        #inv_depth_pp = post_process_inv_depth(
+        #    inv_depths[0], inv_depths_flipped[0], method='mean')
         inv_depth_pp = post_process_inv_depth(
-            inv_depths[0], inv_depths_flipped[0], method='mean')
+            inv_depths, inv_depths_flipped, method='mean')
         depth_pp = inv2depth(inv_depth_pp)
         batch['rgb'] = flip_lr(batch['rgb'])
         # Calculate predicted metrics
