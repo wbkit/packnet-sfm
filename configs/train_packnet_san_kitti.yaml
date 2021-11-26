@@ -30,16 +30,18 @@ datasets:
         crop_train_borders: (-352, 0, 0.5, 1216)
         crop_eval_borders: (-352, 0, 0.5, 1216)
     train:
-        batch_size: 1
+        batch_size: 2
         dataset: ['KITTI']
-        path: ['./data/datasets/KITTI_raw']
+        #path: ['./data/datasets/KITTI_raw']
+        path: ['/scratch/wboet/KITTI_raw/']
         split: ['data_splits/eigen_zhou_files.txt']
         input_depth_type: ['velodyne']
         depth_type: ['groundtruth']
         repeat: [2]
     validation:
         dataset: ['KITTI']
-        path: ['./data/datasets/KITTI_raw']
+        # path: ['./data/datasets/KITTI_raw']
+        path: ['/scratch/wboet/KITTI_raw']
         split: ['data_splits/eigen_test_files.txt',
                 'data_splits/eigen_test_files.txt']
         input_depth_type: ['velodyne','']

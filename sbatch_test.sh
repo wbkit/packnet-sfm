@@ -6,5 +6,5 @@
 #source /itet-stor/wboettcher/net_scratch/conda/bin/conda shell.bash hook
 
 source /itet-stor/wboettcher/net_scratch/conda/etc/profile.d/conda.sh
-conda activate torch-prod
+conda activate torch-prod2
 python3 scripts/train.py configs/overfit_kitti.yaml "$@"

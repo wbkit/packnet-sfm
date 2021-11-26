@@ -80,6 +80,7 @@ class BaseTrainer:
         # Prepare module for training
         module.trainer = self
         # Update and print module configuration
+        # This adapts the attributes such that WANDB and S3 can be used
         prep_logger_and_checkpoint(module)
         print_config(module.config)
 

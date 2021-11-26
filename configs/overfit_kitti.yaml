@@ -1,5 +1,6 @@
 arch:
     max_epochs: 1
+    validate_first: True
 model:
     name: 'SelfSupModel'
     optimizer:

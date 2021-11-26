@@ -9,7 +9,8 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["configs/overfit_kitti.yaml"],
+            //"args": ["configs/overfit_kitti.yaml"],
+            "args": ["configs/train_packnet_san_kitti.yaml"]
         }
     ]
 }

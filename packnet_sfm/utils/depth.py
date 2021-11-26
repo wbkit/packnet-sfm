@@ -244,6 +244,7 @@ def post_process_inv_depth(inv_depth, inv_depth_flipped, method='mean'):
     inv_depth_pp : torch.Tensor [B,1,H,W]
         Post-processed inverse depth map
     """
+    # B, C, H, W = inv_depth[0].shape
     B, C, H, W = inv_depth.shape
     inv_depth_hat = flip_lr(inv_depth_flipped)
     inv_depth_fused = fuse_inv_depth(inv_depth, inv_depth_hat, method=method)
