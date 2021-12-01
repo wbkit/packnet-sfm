@@ -1,5 +1,5 @@
 arch:
-    validate_first: True
+    validate_first: False
 model:
     name: 'SemiSupCompletionModel'
     loss:
@@ -30,7 +30,7 @@ datasets:
         crop_train_borders: (-352, 0, 0.5, 1216)
         crop_eval_borders: (-352, 0, 0.5, 1216)
     train:
-        batch_size: 2
+        batch_size: 3
         dataset: ['KITTI']
         #path: ['./data/datasets/KITTI_raw']
         path: ['/scratch/wboet/KITTI_raw/']
@@ -46,3 +46,8 @@ datasets:
                 'data_splits/eigen_test_files.txt']
         input_depth_type: ['velodyne','']
         depth_type: ['groundtruth','groundtruth']
+checkpoint:
+    filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
+wandb: 
+    dry_run: False
+    name: 'SAN_Net'

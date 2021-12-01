@@ -106,6 +106,7 @@ class ModelCheckpoint:
         # Compare and return
         return monitor_op(current, self.best_k_models[self.kth_best_model])
 
+    # NOTE: This needs a quick fix
     def format_checkpoint_name(self, epoch, metrics):
         metrics['epoch'] = epoch
         filename = self.filename
@@ -126,8 +127,9 @@ class ModelCheckpoint:
         self.epoch_last_check = epoch
         # Prepare filepath
         filepath = self.format_checkpoint_name(epoch, metrics)
-        while os.path.isfile(filepath):
-            filepath = self.format_checkpoint_name(epoch, metrics)
+        # NOTE: The following lines don't make sense and send code into infinite loop
+        #while os.path.isfile(filepath):
+        #    filepath = self.format_checkpoint_name(epoch, metrics)
         # Check if saving or not
         if self.save_top_k != -1:
             current = metrics.get(self.monitor)

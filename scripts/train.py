@@ -41,15 +41,18 @@ def train(file):
     # Produce configuration and checkpoint from filename
     config, ckpt = parse_train_file(file)
 
+    # NOTE Quick-fix of loss name
+    config.checkpoint.monitor = 'KITTI_raw-eigen_test_files-groundtruth-rmse_pp_gt'
+
     # Set debug if requested
     set_debug(config.debug)
 
     # Wandb Logger
-    logger = None if config.wandb.dry_run or rank() > 0 \
+    logger = None if config.wandb.dry_run \
         else filter_args_create(WandbLogger, config.wandb)
 
     # model checkpoint
-    checkpoint = None if config.checkpoint.filepath == '' or rank() > 0 else \
+    checkpoint = None if config.checkpoint.filepath == '' else \
         filter_args_create(ModelCheckpoint, config.checkpoint)
 
     # Initialize model wrapper
