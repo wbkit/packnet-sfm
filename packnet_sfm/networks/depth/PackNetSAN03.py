@@ -9,7 +9,7 @@ from packnet_sfm.networks.layers.packnet.layers01 import \
 
 
 class Encoder(nn.Module):
-    def __init__(self, version, in_channels, ni, n1, n2, n3, n4, 
+    def __init__(self, version, in_channels, ni, n1, n2, n3,  
                  pack_kernel, num_blocks, num_3d_feat, dropout):
         super().__init__()
         # Encoder
@@ -20,13 +20,13 @@ class Encoder(nn.Module):
         self.pack1 = PackLayerConv3d(n1, pack_kernel[0], d=num_3d_feat)
         self.pack2 = PackLayerConv3d(n2, pack_kernel[1], d=num_3d_feat)
         self.pack3 = PackLayerConv3d(n3, pack_kernel[2], d=num_3d_feat)
-        self.pack4 = PackLayerConv3d(n4, pack_kernel[3], d=num_3d_feat)
+        # self.pack4 = PackLayerConv3d(n4, pack_kernel[3], d=num_3d_feat)
         # self.pack5 = PackLayerConv3d(n5, pack_kernel[4], d=num_3d_feat)
 
         self.conv1 = Conv2D(ni, n1, 7, 1)
         self.conv2 = ResidualBlock(n1, n2, num_blocks[0], 1, dropout=dropout)
         self.conv3 = ResidualBlock(n2, n3, num_blocks[1], 1, dropout=dropout)
-        self.conv4 = ResidualBlock(n3, n4, num_blocks[2], 1, dropout=dropout)
+        # self.conv4 = ResidualBlock(n3, n4, num_blocks[2], 1, dropout=dropout)
         # self.conv5 = ResidualBlock(n4, n5, num_blocks[3], 1, dropout=dropout)
 
     def forward(self, rgb):
@@ -41,17 +41,17 @@ class Encoder(nn.Module):
         x2p = self.pack2(x2)
         x3 = self.conv3(x2p)
         x3p = self.pack3(x3)
-        x4 = self.conv4(x3p)
-        x4p = self.pack4(x4)
+        # x4 = self.conv4(x3p)
+        # x4p = self.pack4(x4)
         # x5 = self.conv5(x4p)
         # x5p = self.pack5(x5)
 
         # Skips
-        return x4p, [x, x1p, x2p, x3p]
+        return x3p, [x, x1p, x2p]
 
 
 class Decoder(nn.Module):
-    def __init__(self, version, out_channels, ni, n1, n2, n3, n4,
+    def __init__(self, version, out_channels, ni, n1, n2, n3,
                  unpack_kernel, iconv_kernel, num_3d_feat):
         super().__init__()
         # Decoder
@@ -59,21 +59,21 @@ class Decoder(nn.Module):
 
         n1o, n1i = n1, n1 + ni + out_channels
         n2o, n2i = n2, n2 + n1 + out_channels
-        n3o, n3i = n3, n3 + n2 + out_channels
-        n4o, n4i = n4, n4 + n3
+        n3o, n3i = n3, n3 + n2 
+        # n4o, n4i = n4, n4 + n3
         # n5o, n5i = n5, n5 + n4
 
         # self.unpack5 = UnpackLayerConv3d(n5, n5o, unpack_kernel[0], d=num_3d_feat)
-        self.unpack4 = UnpackLayerConv3d(n4, n4o, unpack_kernel[0], d=num_3d_feat)
-        self.unpack3 = UnpackLayerConv3d(n4, n3o, unpack_kernel[1], d=num_3d_feat)
-        self.unpack2 = UnpackLayerConv3d(n3, n2o, unpack_kernel[2], d=num_3d_feat)
-        self.unpack1 = UnpackLayerConv3d(n2, n1o, unpack_kernel[3], d=num_3d_feat)
+        # self.unpack4 = UnpackLayerConv3d(n4, n4o, unpack_kernel[0], d=num_3d_feat)
+        self.unpack3 = UnpackLayerConv3d(n3, n3o, unpack_kernel[0], d=num_3d_feat)
+        self.unpack2 = UnpackLayerConv3d(n3, n2o, unpack_kernel[1], d=num_3d_feat)
+        self.unpack1 = UnpackLayerConv3d(n2, n1o, unpack_kernel[2], d=num_3d_feat)
 
         # self.iconv5 = Conv2D(n5i, n5, iconv_kernel[0], 1)
-        self.iconv4 = Conv2D(n4i, n4, iconv_kernel[0], 1)
-        self.iconv3 = Conv2D(n3i, n3, iconv_kernel[1], 1)
-        self.iconv2 = Conv2D(n2i, n2, iconv_kernel[2], 1)
-        self.iconv1 = Conv2D(n1i, n1, iconv_kernel[3], 1)
+        # self.iconv4 = Conv2D(n4i, n4, iconv_kernel[0], 1)
+        self.iconv3 = Conv2D(n3i, n3, iconv_kernel[0], 1)
+        self.iconv2 = Conv2D(n2i, n2, iconv_kernel[1], 1)
+        self.iconv1 = Conv2D(n1i, n1, iconv_kernel[2], 1)
 
         # Depth Layers
 
@@ -82,13 +82,13 @@ class Decoder(nn.Module):
         self.unpack_disp3 = nn.Upsample(scale_factor=2, mode='nearest', align_corners=None)
         self.unpack_disp2 = nn.Upsample(scale_factor=2, mode='nearest', align_corners=None)
 
-        self.disp4_layer = InvDepth(n4, out_channels=out_channels)
+        #self.disp4_layer = InvDepth(n4, out_channels=out_channels)
         self.disp3_layer = InvDepth(n3, out_channels=out_channels)
         self.disp2_layer = InvDepth(n2, out_channels=out_channels)
         self.disp1_layer = InvDepth(n1, out_channels=out_channels)
 
-    def forward(self, x4p, skips):
-        skip1, skip2, skip3, skip4 = skips
+    def forward(self, x3p, skips):
+        skip1, skip2, skip3 = skips
 
         # unpack5 = self.unpack5(x5p)
         # if self.version == 'A':
@@ -97,18 +97,18 @@ class Decoder(nn.Module):
         #     concat5 = unpack5 + skip5
         # iconv5 = self.iconv5(concat5)
 
-        unpack4 = self.unpack4(x4p)
-        if self.version == 'A':
-            concat4 = torch.cat((unpack4, skip4), 1)
-        else:
-            concat4 = unpack4 + skip4
-        iconv4 = self.iconv4(concat4)
-        inv_depth4 = self.disp4_layer(iconv4)
-        up_inv_depth4 = self.unpack_disp4(inv_depth4)
+        # unpack4 = self.unpack4(x4p)
+        # if self.version == 'A':
+        #     concat4 = torch.cat((unpack4, skip4), 1)
+        # else:
+        #     concat4 = unpack4 + skip4
+        # iconv4 = self.iconv4(concat4)
+        # inv_depth4 = self.disp4_layer(iconv4)
+        # up_inv_depth4 = self.unpack_disp4(inv_depth4)
 
-        unpack3 = self.unpack3(iconv4)
+        unpack3 = self.unpack3(x3p)
         if self.version == 'A':
-            concat3 = torch.cat((unpack3, skip3, up_inv_depth4), 1)
+            concat3 = torch.cat((unpack3, skip3), 1)
         else:
             concat3 = torch.cat((unpack3 + skip3, up_inv_depth4), 1)
         iconv3 = self.iconv3(concat3)
@@ -133,14 +133,14 @@ class Decoder(nn.Module):
         inv_depth1 = self.disp1_layer(iconv1)
 
         if self.training:
-            inv_depths = [inv_depth1, inv_depth2, inv_depth3, inv_depth4]
+            inv_depths = [inv_depth1, inv_depth2, inv_depth3]
         else:
             inv_depths = [inv_depth1]
 
         return inv_depths
 
 
-class PackNetSAN02(nn.Module):
+class PackNetSAN03(nn.Module):
     """
     PackNet-SAN network, from the paper (https://arxiv.org/abs/2103.16690)
 
@@ -162,22 +162,22 @@ class PackNetSAN02(nn.Module):
         in_channels = 3
         out_channels = 1
         # Hyper-parameters
-        ni, n1, n2, n3, n4 = 16, 32, 32, 64, 64
-        num_blocks = [2, 2, 2]
-        pack_kernel = [3, 3, 3, 3]
-        unpack_kernel = [3, 3, 3, 3]
-        iconv_kernel = [3, 3, 3, 3]
+        ni, n1, n2, n3 = 16, 32, 32, 64
+        num_blocks = [2, 2]
+        pack_kernel = [3, 3, 3]
+        unpack_kernel = [3, 3, 3]
+        iconv_kernel = [3, 3, 3]
         num_3d_feat = 4
 
-        self.encoder = Encoder(self.version, in_channels, ni, n1, n2, n3, n4, 
+        self.encoder = Encoder(self.version, in_channels, ni, n1, n2, n3, 
                                pack_kernel, num_blocks, num_3d_feat, dropout)
-        self.decoder = Decoder(self.version, out_channels, ni, n1, n2, n3, n4,
+        self.decoder = Decoder(self.version, out_channels, ni, n1, n2, n3, 
                                unpack_kernel, iconv_kernel, num_3d_feat)
 
-        self.mconvs = MinkowskiEncoder([n1, n2, n3, n4], with_uncertainty=False)
+        self.mconvs = MinkowskiEncoder([n1, n2, n3], with_uncertainty=False)
 
-        self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
-        self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
+        self.weight = torch.nn.parameter.Parameter(torch.ones(3), requires_grad=True)
+        self.bias = torch.nn.parameter.Parameter(torch.zeros(3), requires_grad=True)
 
         self.init_weights()
 
@@ -194,18 +194,18 @@ class PackNetSAN02(nn.Module):
         Runs the network and returns inverse depth maps
         (4 scales if training and 1 if not).
         """
-        x4p, skips = self.encoder(rgb)
+        x3p, skips = self.encoder(rgb)
 
         if input_depth is not None:
             self.mconvs.prep(input_depth)
 
             skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs(skips[1]) + self.bias[0].view(1, 1, 1, 1)
             skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs(skips[2]) + self.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs(skips[3]) + self.bias[2].view(1, 1, 1, 1)
+            #skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs(skips[3]) + self.bias[2].view(1, 1, 1, 1)
             # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x4p      = x4p      * self.weight[3].view(1, 1, 1, 1) + self.mconvs(x4p)      + self.bias[3].view(1, 1, 1, 1)
+            x3p      = x3p      * self.weight[2].view(1, 1, 1, 1) + self.mconvs(x3p)      + self.bias[2].view(1, 1, 1, 1)
 
-        return self.decoder(x4p, skips)
+        return self.decoder(x3p, skips)
 
     def forward(self, rgb, input_depth=None, **kwargs):
 

@@ -172,6 +172,13 @@ class BaseTrainer:
             # For all batches
             for i, batch in progress_bar:
                 # Send batch to GPU and take a validation step
+
+                ############################
+                from depth_processing import plot_depth_map, filter_depth_channels
+                plot_depth_map(batch)
+                filter_depth_channels(batch)
+                #############################
+
                 batch = sample_to_cuda(batch)
                 output = module.validation_step(batch, i, n)
                 # Append output to list of outputs

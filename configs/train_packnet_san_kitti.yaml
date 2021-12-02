@@ -1,5 +1,5 @@
 arch:
-    validate_first: False
+    validate_first: True
 model:
     name: 'SemiSupCompletionModel'
     loss:
@@ -17,7 +17,7 @@ model:
         step_size: 30
         gamma: 0.5
     depth_net:
-        name: 'PackNetSAN02'
+        name: 'PackNetSAN03'
         version: '1A'
         dropout: 0.5
     params:
