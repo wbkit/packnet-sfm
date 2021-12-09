@@ -149,12 +149,6 @@ class BaseTrainer:
                 'Epoch {} | Avg.Loss {:.4f}'.format(
                     module.current_epoch, self.avg_loss(output['loss'].item())))
 
-            ########################
-            ## Spped up debugging
-            #################
-            #if i > 10:
-            #    break
-
         # Return outputs for epoch end
         return module.training_epoch_end(outputs)
 
@@ -169,14 +163,26 @@ class BaseTrainer:
             progress_bar = self.val_progress_bar(
                 dataloader, module.config.datasets.validation, n)
             outputs = []
+            #Bool to check whether depth object has been created
+            is_created = False
+            from depth_processing import DepthFilter, plot_depth_map, filter_depth_channels
+
             # For all batches
             for i, batch in progress_bar:
                 # Send batch to GPU and take a validation step
 
                 ############################
-                from depth_processing import plot_depth_map, filter_depth_channels
-                plot_depth_map(batch)
-                filter_depth_channels(batch)
+                # if is_created is False:
+                #     filter_obj = DepthFilter(batch)
+                #     is_created = True
+                # plot_depth_map(batch)
+                # filter_depth_channels(batch)
+                # import time
+                # start = time.time()
+                # batch['depth'][0] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=30, to_ch=40))
+                # end = time.time()
+                # print(end - start)
+                
                 #############################
 
                 batch = sample_to_cuda(batch)

@@ -1,5 +1,5 @@
 arch:
-    validate_first: True
+    validate_first: False
 model:
     name: 'SemiSupCompletionModel'
     loss:
@@ -17,7 +17,7 @@ model:
         step_size: 30
         gamma: 0.5
     depth_net:
-        name: 'PackNetSAN03'
+        name: 'ResNetSAN01'
         version: '1A'
         dropout: 0.5
     params:
@@ -49,5 +49,5 @@ datasets:
 checkpoint:
     filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
 wandb: 
-    dry_run: False
+    dry_run: True
     name: 'SAN_Net'

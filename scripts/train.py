@@ -43,7 +43,19 @@ def train(file):
 
     # NOTE Quick-fix of loss name
     config.checkpoint.monitor = 'KITTI_raw-eigen_test_files-groundtruth-rmse_pp_gt'
-
+    # NOTE: For SAN checkpoint
+    # config['config'] = 'configs/train_packnet_san_kitti.yaml'
+    # config.wandb['dir'] = 'wandb'
+    # config.wandb['entity'] = 'wbeth'
+    # config.wandb['project'] = 'CVL_project'
+    # config.checkpoint['s3_path'] =''
+    # config.checkpoint['s3_url'] = ''
+    # config.checkpoint['filepath'] = '/scratch_net/biwidl213/wboettcher/Checkpoints'
+    # if config.model.depth_net.name == 'PackNetSlimEnc01':
+    #     config.model.depth_net.name = 'PackNetSAN01'
+    # config.datasets.train['path'] = ['/scratch/wboet/KITTI_raw/']
+    # config.datasets.validation['path'] = ['/scratch/wboet/KITTI_raw/', '/scratch/wboet/KITTI_raw/']
+ 
     # Set debug if requested
     set_debug(config.debug)
 
