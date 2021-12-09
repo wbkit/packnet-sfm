@@ -8,6 +8,7 @@ from packnet_sfm.utils.config import prep_logger_and_checkpoint
 # from packnet_sfm.trainers.base_trainer import BaseTrainer, sample_to_cuda
 from packnet_sfm.utils.logging import print_config
 from packnet_sfm.utils.logging import AvgMeter
+import torch
 
 
 def sample_to_cuda(data, dtype=None):
@@ -148,6 +149,10 @@ class BaseTrainer:
             progress_bar.set_description(
                 'Epoch {} | Avg.Loss {:.4f}'.format(
                     module.current_epoch, self.avg_loss(output['loss'].item())))
+
+            #####################################
+            # torch.cuda.empty_cache()
+            ######################################
 
         # Return outputs for epoch end
         return module.training_epoch_end(outputs)

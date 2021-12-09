@@ -146,7 +146,7 @@ class ResNetSAN02(nn.Module):
         out_channels = 1
         # Hyper-parameters
         # ni, n1, n2, n3, n4, n5 = 32, 32, 64, 128, 256, 512
-        ni, n1, n2, n3, n4 = 32, 32, 64, 128, 256
+        ni, n1, n2, n3, n4 = 32, 32, 64, 128, 128
         num_blocks = [2, 2, 3]
         iconv_kernel = [3, 3, 3, 3]
 
@@ -180,11 +180,11 @@ class ResNetSAN02(nn.Module):
         if input_depth is not None:
             self.mconvs.prep(input_depth)
 
-            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs(skips[1]) + self.bias[0].view(1, 1, 1, 1)
-            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs(skips[2]) + self.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs(skips[3]) + self.bias[2].view(1, 1, 1, 1)
+            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.bias[0].view(1, 1, 1, 1)
+            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.bias[1].view(1, 1, 1, 1)
+            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.bias[2].view(1, 1, 1, 1)
             # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x4      = x4      * self.weight[3].view(1, 1, 1, 1) + self.mconvs(x4)      + self.bias[3].view(1, 1, 1, 1)
+            x4      = x4      * self.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.bias[3].view(1, 1, 1, 1)
 
         return self.decoder(x4, skips), skips + [x4]
 

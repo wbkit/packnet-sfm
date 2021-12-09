@@ -6,6 +6,7 @@ from packnet_sfm.geometry.pose import Pose
 from packnet_sfm.models.base_model import BaseModel
 from packnet_sfm.models.model_utils import flip_batch_input, flip_output, upsample_output
 from packnet_sfm.utils.misc import filter_dict
+import torch.nn as nn
 
 
 class SfmModel(BaseModel):
@@ -44,7 +45,7 @@ class SfmModel(BaseModel):
 
     def add_depth_net(self, depth_net):
         """Add a depth network to the model"""
-        self.depth_net = depth_net
+        self.depth_net = depth_net #nn.DataParallel(depth_net)
 
     def add_pose_net(self, pose_net):
         """Add a pose network to the model"""

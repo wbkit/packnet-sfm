@@ -98,7 +98,7 @@ class MinkowskiEncoder(nn.Module):
     def __init__(self, channels, with_uncertainty=False, add_rgb=False):
         super().__init__()
         self.mconvs = nn.ModuleList()
-        kernel_sizes = [5, 5] + [3] * (len(channels) - 1)
+        kernel_sizes = [5, 5] + [3] * (len(channels) - 2)
         self.mconvs.append(
             MinkConv2D(1, channels[0], kernel_sizes[0], 2,
                        with_uncertainty=with_uncertainty))
@@ -110,22 +110,34 @@ class MinkowskiEncoder(nn.Module):
         self.with_uncertainty = with_uncertainty
         self.add_rgb = add_rgb
 
+        self.nr_layers = len(kernel_sizes)
+
     def prep(self, d):
         self.d = sparsify_depth(d)
         self.shape = d.shape
         self.n = 0
 
-    def forward(self, x=None):
+    def forward(self):
 
         unc, self.d = self.mconvs[self.n](self.d)
         self.n += 1
 
-        if self.with_uncertainty:
-            out = densify_add_features_unc(x, unc * self.d, unc, self.shape)
-        else:
-            out = densify_features(self.d, self.shape)
-
-        if self.add_rgb:
-            self.d = map_add_features(x, self.d)
+        out = densify_features(self.d, self.shape)
 
         return out
+
+    # def forward(self, d):
+    #     d = sparsify_depth(d)
+    #     shape = d.shape
+
+    #     unc, d1 = self.mconvs[0](d)
+    #     unc, d2 = self.mconvs[1](d1)
+    #     unc, d3 = self.mconvs[2](d2)
+    #     unc, d4 = self.mconvs[3](d3)
+
+    #     out1 = densify_features(d1, shape)
+    #     out2 = densify_features(d2, shape)
+    #     out3 = densify_features(d3, shape)
+    #     out4 = densify_features(d4, shape)
+
+    #     return out1, out2, out3, out4
