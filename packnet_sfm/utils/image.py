@@ -167,7 +167,7 @@ def interpolate_scales(images, shape=None, mode='bilinear', align_corners=False)
     """
     # If no shape is provided, interpolate to highest resolution
     if shape is None:
-        shape = images[0].shape
+        shape = images[0][0].shape
     # Take last two dimensions as shape
     if len(shape) > 2:
         shape = shape[-2:]

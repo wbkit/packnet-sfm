@@ -17,7 +17,7 @@ model:
         step_size: 30
         gamma: 0.5
     depth_net:
-        name: 'ResNetSAN01'
+        name: 'ResNetSAN02'
         version: '1A'
         dropout: 0.5
     params:
@@ -30,7 +30,7 @@ datasets:
         crop_train_borders: (-352, 0, 0.5, 1216)
         crop_eval_borders: (-352, 0, 0.5, 1216)
     train:
-        batch_size: 4
+        batch_size: 8
         dataset: ['KITTI']
         #path: ['./data/datasets/KITTI_raw']
         path: ['/scratch/wboet/KITTI_raw/']

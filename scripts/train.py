@@ -12,7 +12,9 @@ from packnet_sfm.utils.config import parse_train_file
 from packnet_sfm.utils.load import set_debug, filter_args_create
 # from packnet_sfm.utils.horovod import hvd_init, rank
 from packnet_sfm.loggers import WandbLogger
+import torch
 import torch.nn as nn
+
 
 def parse_args():
     """Parse arguments for training script"""
@@ -68,8 +70,8 @@ def train(file):
         filter_args_create(ModelCheckpoint, config.checkpoint)
 
     # Initialize model wrapper
-    model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger)
-    # model_wrapper = nn.DataParallel(model_wrapper, device_ids=[0, 1])
+    # model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger)
+    model_wrapper = nn.DataParallel(ModelWrapper(config, resume=ckpt, logger=logger), device_ids=[0, 1])
 
     # Create trainer with args.arch parameters
     trainer = BaseTrainer(**config.arch, checkpoint=checkpoint)
