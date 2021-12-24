@@ -146,7 +146,7 @@ class ResNetSAN02(nn.Module):
         out_channels = 1
         # Hyper-parameters
         # ni, n1, n2, n3, n4, n5 = 32, 32, 64, 128, 256, 512
-        ni, n1, n2, n3, n4 = 32, 32, 64, 128, 128
+        ni, n1, n2, n3, n4 = 32, 32, 32, 64, 128
         num_blocks = [2, 2, 3]
         iconv_kernel = [3, 3, 3, 3]
 
@@ -170,7 +170,7 @@ class ResNetSAN02(nn.Module):
                 if m.bias is not None:
                     m.bias.data.zero_()
 
-    def run_network(self, rgb, input_depth=None):
+    def run_network(self, rgb, input_depth=None, **kwargs):
         """
         Runs the network and returns inverse depth maps
         (4 scales if training and 1 if not).
@@ -188,33 +188,6 @@ class ResNetSAN02(nn.Module):
 
         return self.decoder(x4, skips), skips + [x4]
 
-    # def forward(self, rgb, input_depth=None, **kwargs):
-
-    #     if not self.training:
-    #         inv_depths, _ = self.run_network(rgb, input_depth)
-    #         return {
-    #             'inv_depths': inv_depths,
-    #         }
-
-    #     output = {}
-
-    #     inv_depths_rgb, skip_feat_rgb = self.run_network(rgb)
-    #     output['inv_depths'] = inv_depths_rgb
-
-    #     if input_depth is None:
-    #         return {
-    #             'inv_depths': inv_depths_rgb,
-    #         }
-
-    #     inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth)
-    #     output['inv_depths_rgbd'] = inv_depths_rgbd
-
-    #     loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-    #                 for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-    #     output['depth_loss'] = loss
-
-    #     return output
-
     def forward(self, rgb, input_depth=None, **kwargs):
 
         if not self.training:
@@ -225,22 +198,49 @@ class ResNetSAN02(nn.Module):
 
         output = {}
 
-        # inv_depths_rgb, skip_feat_rgb = self.run_network(rgb)
-        # output['inv_depths'] = inv_depths_rgb
+        inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, None, **kwargs)
+        output['inv_depths'] = inv_depths_rgb
 
-        # if input_depth is None:
-        #     return {
-        #         'inv_depths': inv_depths_rgb,
-        #     }
+        if (input_depth is None) or (kwargs['epoch_nr'] < 20):
+            return {
+                'inv_depths': inv_depths_rgb,
+            }
 
-        inv_depths_rgbd, _ = self.run_network(rgb, input_depth)
+        inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
         output['inv_depths_rgbd'] = inv_depths_rgbd
 
-        # NOTE: Performance modification
-        output['inv_depths'] = inv_depths_rgbd
-
-        # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-        #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-        output['depth_loss'] = torch.tensor(0).to('cuda') #loss
+        loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+                    for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+        output['depth_loss'] = loss
 
         return output
+
+    # def forward(self, rgb, input_depth=None, **kwargs):
+
+    #     if not self.training:
+    #         inv_depths, _ = self.run_network(rgb, input_depth, **kwargs)
+    #         return {
+    #             'inv_depths': inv_depths,
+    #         }
+
+    #     output = {}
+
+    #     # inv_depths_rgb, skip_feat_rgb = self.run_network(rgb)
+    #     # output['inv_depths'] = inv_depths_rgb
+
+    #     # if input_depth is None:
+    #     #     return {
+    #     #         'inv_depths': inv_depths_rgb,
+    #     #     }
+
+    #     inv_depths_rgbd, _ = self.run_network(rgb, input_depth, **kwargs)
+    #     output['inv_depths_rgbd'] = inv_depths_rgbd
+
+    #     # NOTE: Performance modification
+    #     output['inv_depths'] = inv_depths_rgbd
+
+    #     # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+    #     #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+    #     output['depth_loss'] = torch.tensor(0).to('cuda') #loss
+
+    #     return output

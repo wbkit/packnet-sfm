@@ -165,7 +165,7 @@ cfg.datasets.validation.split = []                  # Validation split
 cfg.datasets.validation.depth_type = ['']           # Validation depth type
 cfg.datasets.validation.input_depth_type = ['']     # Validation input depth type
 cfg.datasets.validation.cameras = [[]]              # Validation cameras (double list, one for each dataset)
-cfg.datasets.validation.num_logs = 5                # Number of validation images to log
+cfg.datasets.validation.num_logs = 10                # Number of validation images to log
 ########################################################################################################################
 ### DATASETS.TEST
 ########################################################################################################################

@@ -162,7 +162,7 @@ class PackNetSAN02(nn.Module):
         in_channels = 3
         out_channels = 1
         # Hyper-parameters
-        ni, n1, n2, n3, n4 = 16, 32, 32, 64, 64
+        ni, n1, n2, n3, n4 = 16, 16, 32, 64, 64
         num_blocks = [2, 2, 2]
         pack_kernel = [3, 3, 3, 3]
         unpack_kernel = [3, 3, 3, 3]
@@ -199,14 +199,45 @@ class PackNetSAN02(nn.Module):
         if input_depth is not None:
             self.mconvs.prep(input_depth)
 
-            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs(skips[1]) + self.bias[0].view(1, 1, 1, 1)
-            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs(skips[2]) + self.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs(skips[3]) + self.bias[2].view(1, 1, 1, 1)
+            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.bias[0].view(1, 1, 1, 1)
+            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.bias[1].view(1, 1, 1, 1)
+            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.bias[2].view(1, 1, 1, 1)
             # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x4p      = x4p      * self.weight[3].view(1, 1, 1, 1) + self.mconvs(x4p)      + self.bias[3].view(1, 1, 1, 1)
+            x4p      = x4p      * self.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.bias[3].view(1, 1, 1, 1)
 
-        return self.decoder(x4p, skips)
+        return self.decoder(x4p, skips), skips + [x4p]
 
+    # def forward(self, rgb, input_depth=None, **kwargs):
+
+    #     if not self.training:
+    #         inv_depths, _ = self.run_network(rgb, input_depth)
+    #         return {
+    #             'inv_depths': inv_depths,
+    #         }
+
+    #     output = {}
+
+    #     # inv_depths_rgb, skip_feat_rgb = self.run_network(rgb)
+    #     # output['inv_depths'] = inv_depths_rgb
+
+    #     # if input_depth is None:
+    #     #     return {
+    #     #         'inv_depths': inv_depths_rgb,
+    #     #     }
+
+    #     inv_depths_rgbd = self.run_network(rgb, input_depth)
+    #     output['inv_depths_rgbd'] = inv_depths_rgbd
+
+    #     # NOTE: Performance modification
+    #     output['inv_depths'] = inv_depths_rgbd
+
+    #     # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+    #     #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+    #     output['depth_loss'] = 0 #loss
+
+    #     return output
+
+    
     def forward(self, rgb, input_depth=None, **kwargs):
 
         if not self.training:
@@ -217,22 +248,19 @@ class PackNetSAN02(nn.Module):
 
         output = {}
 
-        # inv_depths_rgb, skip_feat_rgb = self.run_network(rgb)
-        # output['inv_depths'] = inv_depths_rgb
+        inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, None)
+        output['inv_depths'] = inv_depths_rgb
 
-        # if input_depth is None:
-        #     return {
-        #         'inv_depths': inv_depths_rgb,
-        #     }
+        if (input_depth is None) or (kwargs['epoch_nr'] < 20):
+            return {
+                'inv_depths': inv_depths_rgb,
+            }
 
-        inv_depths_rgbd = self.run_network(rgb, input_depth)
+        inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth)
         output['inv_depths_rgbd'] = inv_depths_rgbd
 
-        # NOTE: Performance modification
-        output['inv_depths'] = inv_depths_rgbd
-
-        # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-        #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-        output['depth_loss'] = 0 #loss
+        loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+                    for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+        output['depth_loss'] = loss
 
         return output

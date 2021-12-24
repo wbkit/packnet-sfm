@@ -6,7 +6,7 @@ import torch
 class DepthFilter:
 
     def __init__(self, batch):
-        depth_map = batch['depth'][0][0].numpy()
+        depth_map = batch['input_depth'][0][0].numpy()
         self.x_map = np.zeros(depth_map.shape)
         self.y_map = np.zeros(depth_map.shape)
 
@@ -24,14 +24,14 @@ class DepthFilter:
         self.y_map = self.y_map / k_f
 
     def filter_ch_from_to(self, batch, from_ch=0, to_ch=63):
-        depth_map = batch['depth'][0].numpy()
+        depth_map = batch['input_depth'].numpy()
 
         z_map = depth_map / np.sqrt(1. + self.x_map**2 + self.y_map**2)
         #x_map = self.x_map * z_map
         y_map = self.y_map * z_map
 
-        #prel_mask = (depth_map >= 0)
-        theta = np.arcsin(y_map / depth_map ) #* prel_mask
+        # prel_mask = (depth_map > 0)
+        theta = np.arcsin(y_map / (depth_map + 1e-5) ) # * prel_mask
 
         # Get bounds from data
         theta_min = -0.30 #np.min(theta)
@@ -45,15 +45,15 @@ class DepthFilter:
         lidar_channel_arr = np.around(theta_norm) 
 
         # Filter
-        mask_arr = ((depth_map <= 0) | (lidar_channel_arr < from_ch) | (lidar_channel_arr > to_ch))
-        #mask_arr = ((depth_map <= 0) | (np.mod(lidar_channel_arr, 2) != 1))
-        depth_map[mask_arr] = -1
+        #mask_arr = ((depth_map <= 0) | (lidar_channel_arr < from_ch) | (lidar_channel_arr > to_ch))
+        mask_arr = ((depth_map <= 0) | (np.mod(lidar_channel_arr, 2) != 1))
+        depth_map[mask_arr] = 0
 
         #lidar_channel_arr[mask_arr] = -1
         #fig, ax = plt.subplots()
-        #ax.imshow(np.mod(lidar_channel_arr[0], 5))
+        #ax.imshow(np.mod(lidar_channel_arr[0][0], 5))
         #plt.show()
-        #plt.savefig('depth_plot_chfilt.png', dpi=800)
+        #plt.savefig('depth_plot_chfilt2.png', dpi=800)
 
         return depth_map
 
@@ -117,36 +117,36 @@ def filter_depth_channels(batch, index=0):
     plt.show()
     plt.savefig('depth_plot_ch.png', dpi=800)
 
-def classify_lidar_channels(velodyne):
-    # Get horizontal angle of each datapoint in the LIDAR coord. system
-    x = velodyne[:,0]
-    y = velodyne[:,1]
-    z = velodyne[:,2]
+# def classify_lidar_channels(velodyne):
+#     # Get horizontal angle of each datapoint in the LIDAR coord. system
+#     x = velodyne[:,0]
+#     y = velodyne[:,1]
+#     z = velodyne[:,2]
 
-    norm = np.sqrt(x**2 + y**2 + z**2)
-    lidar_theta = np.arccos(z / norm)
+#     norm = np.sqrt(x**2 + y**2 + z**2)
+#     lidar_theta = np.arccos(z / norm)
     
 
-    # Plot the vertical angle distribution
-    lidar_theta = (-lidar_theta + np.pi/2)
-    plt.figure(figsize=(12, 4))
-    plt.hist((360 * lidar_theta /(2*np.pi)), bins=256)
-    plt.xlabel("theta in °")
+#     # Plot the vertical angle distribution
+#     lidar_theta = (-lidar_theta + np.pi/2)
+#     plt.figure(figsize=(12, 4))
+#     plt.hist((360 * lidar_theta /(2*np.pi)), bins=256)
+#     plt.xlabel("theta in °")
 
-    # Get bounds from data
-    theta_min = np.min(lidar_theta)
-    theta_max = np.max(lidar_theta)
+#     # Get bounds from data
+#     theta_min = np.min(lidar_theta)
+#     theta_max = np.max(lidar_theta)
 
-    # Transform and normalise data
-    # Value range will be from -0.5 to 63.49
-    lidar_theta_norm = lidar_theta - theta_min
-    theta_max_n = np.max(lidar_theta_norm)
-    lidar_theta_norm = lidar_theta_norm * (63.99 / theta_max_n) - 0.5
+#     # Transform and normalise data
+#     # Value range will be from -0.5 to 63.49
+#     lidar_theta_norm = lidar_theta - theta_min
+#     theta_max_n = np.max(lidar_theta_norm)
+#     lidar_theta_norm = lidar_theta_norm * (63.99 / theta_max_n) - 0.5
 
-    # Classify by rounding
-    lidar_channel_arr = np.around(lidar_theta_norm)
+#     # Classify by rounding
+#     lidar_channel_arr = np.around(lidar_theta_norm)
 
-    assert(np.max(lidar_channel_arr) == 63)
-    assert(np.min(lidar_channel_arr) == 0)
+#     assert(np.max(lidar_channel_arr) == 63)
+#     assert(np.min(lidar_channel_arr) == 0)
 
-    return lidar_channel_arr
+#     return lidar_channel_arr

@@ -180,10 +180,10 @@ class ModelWrapper(torch.nn.Module):
         return setup_dataloader(self.test_dataset,
                                 self.config.datasets.test, 'test')
 
-    def training_step(self, batch, *args):
+    def training_step(self, batch, *args, **kwargs):
         """Processes a training batch."""
         batch = stack_batch(batch)
-        output = self.model(batch, progress=self.progress)
+        output = self.model(batch, progress=self.progress, **kwargs)
         return {
             'loss': output['loss'],
             'metrics': output['metrics']

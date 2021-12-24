@@ -199,11 +199,11 @@ class PackNetSAN01(nn.Module):
         if input_depth is not None:
             self.mconvs.prep(input_depth)
 
-            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs(skips[1]) + self.bias[0].view(1, 1, 1, 1)
-            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs(skips[2]) + self.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs(skips[3]) + self.bias[2].view(1, 1, 1, 1)
-            skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x5p      = x5p      * self.weight[4].view(1, 1, 1, 1) + self.mconvs(x5p)      + self.bias[4].view(1, 1, 1, 1)
+            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.bias[0].view(1, 1, 1, 1)
+            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.bias[1].view(1, 1, 1, 1)
+            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.bias[2].view(1, 1, 1, 1)
+            skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs() + self.bias[3].view(1, 1, 1, 1)
+            x5p      = x5p      * self.weight[4].view(1, 1, 1, 1) + self.mconvs()      + self.bias[4].view(1, 1, 1, 1)
 
         return self.decoder(x5p, skips), skips + [x5p]
 

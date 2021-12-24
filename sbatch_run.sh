@@ -1,10 +1,11 @@
 #!/bin/bash
-#SBATCH --output=sbatch_log/%j.out
+#SBATCH --output=/scratch_net/biwidl213/wboettcher/Logs/%j.out
 #SBATCH --gres=gpu:1
-##SBATCH --mem=20G
 #SBATCH --constraint='geforce_gtx_titan_x'
 #source /itet-stor/wboettcher/net_scratch/conda/bin/conda shell.bash hook
 
 source /itet-stor/wboettcher/net_scratch/conda/etc/profile.d/conda.sh
 conda activate torch-prod2
-python3 scripts/train.py configs/overfit_kitti.yaml "$@"
+source ./copy_script_for_sbatch.sh
+#python3 scripts/train.py configs/train_packnet_san_kitti.yaml "$@"
+python3 scripts/train.py ../Checkpoints/SAN_Net_res/KITTI_raw-eigen_test23.ckpt

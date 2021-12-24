@@ -110,7 +110,7 @@ class BaseTrainer:
         # Epoch loop
         for epoch in range(module.current_epoch, self.max_epochs):
             # Train
-            self.train(train_dataloader, module, optimizer)
+            self.train(train_dataloader, module, optimizer, epoch_nr=epoch)
             # Validation
             validation_output = self.validate(val_dataloaders, module)
             # Check and save model
@@ -120,7 +120,7 @@ class BaseTrainer:
             # Take a scheduler step
             scheduler.step()
 
-    def train(self, dataloader, module, optimizer):
+    def train(self, dataloader, module, optimizer, **kwargs):
         # Set module to train
         module.train()
         # Shuffle dataloader sampler
@@ -136,8 +136,13 @@ class BaseTrainer:
             # Reset optimizer
             optimizer.zero_grad()
             # Send samples to GPU and take a training step
+            ##############
+            # batch['depth'] = None
+            ##################
+
             batch = sample_to_cuda(batch)
-            output = module.training_step(batch, i)
+            # output = module.training_step(batch, i) # original
+            output = module.training_step(batch, i, **kwargs) # new to propagate the epoch
             # Backprop through loss and take an optimizer step
             output['loss'].backward()
             optimizer.step()
@@ -152,6 +157,8 @@ class BaseTrainer:
 
             #####################################
             # torch.cuda.empty_cache()
+            #if i > 800:
+            #    break
             ######################################
 
         # Return outputs for epoch end
@@ -177,16 +184,17 @@ class BaseTrainer:
                 # Send batch to GPU and take a validation step
 
                 ############################
-                # if is_created is False:
-                #     filter_obj = DepthFilter(batch)
-                #     is_created = True
-                # plot_depth_map(batch)
-                # filter_depth_channels(batch)
-                # import time
-                # start = time.time()
-                # batch['depth'][0] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=30, to_ch=40))
-                # end = time.time()
-                # print(end - start)
+                # if n == 0:
+                    # if is_created is False:
+                    #     filter_obj = DepthFilter(batch)
+                    #     is_created = True
+                    # plot_depth_map(batch)
+                    # filter_depth_channels(batch)
+                    # import time
+                    # start = time.time()
+                    # batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=30, to_ch=40))
+                    # end = time.time()
+                    # print(end - start)
                 
                 #############################
 

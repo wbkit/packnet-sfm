@@ -57,6 +57,7 @@ def train(file):
     #     config.model.depth_net.name = 'PackNetSAN01'
     # config.datasets.train['path'] = ['/scratch/wboet/KITTI_raw/']
     # config.datasets.validation['path'] = ['/scratch/wboet/KITTI_raw/', '/scratch/wboet/KITTI_raw/']
+    # config.datasets.validation['input_depth_type'] = ['velodyne','']
  
     # Set debug if requested
     set_debug(config.debug)

@@ -10,8 +10,9 @@
             "request": "launch",
             "program": "${file}",
             //"args": ["configs/overfit_kitti.yaml"],
-            "args": ["configs/train_packnet_san_kitti.yaml"]
+            //"args": ["configs/train_packnet_san_kitti.yaml"]
             //"args": ["data/PackNetSAN01_HR_sup_K.ckpt"] 
+            "args": ["data/test.ckpt"] 
         }
     ]
 }

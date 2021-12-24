@@ -1,5 +1,5 @@
 arch:
-    validate_first: False
+    validate_first: False   #
 model:
     name: 'SemiSupCompletionModel'
     loss:
@@ -17,7 +17,7 @@ model:
         step_size: 30
         gamma: 0.5
     depth_net:
-        name: 'ResNetSAN02'
+        name: 'PackNetSAN02' #
         version: '1A'
         dropout: 0.5
     params:
@@ -37,7 +37,7 @@ datasets:
         split: ['data_splits/eigen_zhou_files.txt']
         input_depth_type: ['velodyne']
         depth_type: ['groundtruth']
-        repeat: [2]
+        repeat: [1]
     validation:
         dataset: ['KITTI']
         # path: ['./data/datasets/KITTI_raw']
@@ -49,5 +49,7 @@ datasets:
 checkpoint:
     filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
 wandb: 
-    dry_run: True
-    name: 'SAN_Net'
+    dry_run: False      #
+    name: 'SAN_Net_pack' #
+save:
+    folder: '/scratch_net/biwidl213/wboettcher/Save'
