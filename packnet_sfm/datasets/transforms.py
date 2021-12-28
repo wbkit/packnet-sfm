@@ -58,9 +58,10 @@ def validation_transforms(sample, image_shape, crop_eval_borders):
     """
     if len(crop_eval_borders) > 0:
         borders = parse_crop_borders(crop_eval_borders, sample['rgb'].size[::-1])
-        sample = crop_sample_input(sample, borders)
+        sample = crop_sample(sample, borders)
     if len(image_shape) > 0:
         sample['rgb'] = resize_image(sample['rgb'], image_shape)
+        sample['depth'] = resize_depth_preserve(sample['depth'], image_shape)
         if 'input_depth' in sample:
             sample['input_depth'] = resize_depth_preserve(sample['input_depth'], image_shape)
     sample = to_tensor_sample(sample)
@@ -84,7 +85,7 @@ def test_transforms(sample, image_shape, crop_eval_borders):
     """
     if len(crop_eval_borders) > 0:
         borders = parse_crop_borders(crop_eval_borders, sample['rgb'].size[::-1])
-        sample = crop_sample_input(sample, borders)
+        sample = crop_sample(sample, borders)
     if len(image_shape) > 0:
         sample['rgb'] = resize_image(sample['rgb'], image_shape)
         if 'input_depth' in sample:

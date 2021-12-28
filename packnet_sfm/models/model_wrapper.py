@@ -76,6 +76,11 @@ class ModelWrapper(torch.nn.Module):
                 resume['file']), 'magenta', attrs=['bold']))
             self.model = load_network(
                 self.model, resume['state_dict'], 'model')
+            ################################################################
+            self.model.depth_net.encoder.load_state_dict(resume['encoder_state_dict'], strict=False)
+            self.model.depth_net.decoder.load_state_dict(resume['decoder_state_dict'], strict=False)
+            self.model.depth_net.fusion_weights.load_state_dict(resume['fusion_state_dict'], strict=False)
+            #################################################################
             if 'epoch' in resume:
                 self.current_epoch = resume['epoch']
 

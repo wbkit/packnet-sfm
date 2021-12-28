@@ -122,6 +122,14 @@ class Decoder(nn.Module):
 
         return inv_depths
 
+class FusionWeights(nn.Module):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
+        self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
+    
+    def forward(self, rgb, input_depth=None, **kwargs):
+        return self.weight, self.bias
 
 class ResNetSAN02(nn.Module):
     """
@@ -146,7 +154,7 @@ class ResNetSAN02(nn.Module):
         out_channels = 1
         # Hyper-parameters
         # ni, n1, n2, n3, n4, n5 = 32, 32, 64, 128, 256, 512
-        ni, n1, n2, n3, n4 = 32, 32, 32, 64, 128
+        ni, n1, n2, n3, n4 = 32, 32, 64, 64, 128
         num_blocks = [2, 2, 3]
         iconv_kernel = [3, 3, 3, 3]
 
@@ -157,8 +165,9 @@ class ResNetSAN02(nn.Module):
 
         self.mconvs = MinkowskiEncoder([n1, n2, n3, n4], with_uncertainty=False)
 
-        self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
-        self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
+        #self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
+        #self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
+        self.fusion_weights = FusionWeights()
 
         self.init_weights()
 
@@ -180,11 +189,11 @@ class ResNetSAN02(nn.Module):
         if input_depth is not None:
             self.mconvs.prep(input_depth)
 
-            skips[1] = skips[1] * self.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.bias[0].view(1, 1, 1, 1)
-            skips[2] = skips[2] * self.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.bias[2].view(1, 1, 1, 1)
+            skips[1] = skips[1] * self.fusion_weights.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[0].view(1, 1, 1, 1)
+            skips[2] = skips[2] * self.fusion_weights.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[1].view(1, 1, 1, 1)
+            skips[3] = skips[3] * self.fusion_weights.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[2].view(1, 1, 1, 1)
             # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x4      = x4      * self.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.bias[3].view(1, 1, 1, 1)
+            x4      = x4      * self.fusion_weights.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.fusion_weights.bias[3].view(1, 1, 1, 1)
 
         return self.decoder(x4, skips), skips + [x4]
 
@@ -198,21 +207,24 @@ class ResNetSAN02(nn.Module):
 
         output = {}
 
-        inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, None, **kwargs)
-        output['inv_depths'] = inv_depths_rgb
+        # Freeze encoder after 20th epoch
+        if (kwargs['epoch_nr'] == 20):
+            for param in self.encoder.parameters():
+                param.requires_grad = False
+        # output['inv_depths'] = inv_depths_rgb
 
-        if (input_depth is None) or (kwargs['epoch_nr'] < 20):
+        if (input_depth is None) or (kwargs['epoch_nr'] < 20):  # Modified
+            inv_depths_rgb, _ = self.run_network(rgb, None, **kwargs)
             return {
                 'inv_depths': inv_depths_rgb,
             }
-
-        inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
-        output['inv_depths_rgbd'] = inv_depths_rgbd
-
-        loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-                    for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-        output['depth_loss'] = loss
-
+        else:
+            inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
+            output['inv_depths_rgbd'] = inv_depths_rgbd
+            output['inv_depths'] = inv_depths_rgbd
+            # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+            #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+            output['depth_loss'] = torch.tensor(0).to('cuda')
         return output
 
     # def forward(self, rgb, input_depth=None, **kwargs):

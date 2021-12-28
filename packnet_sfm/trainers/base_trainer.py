@@ -9,6 +9,7 @@ from packnet_sfm.utils.config import prep_logger_and_checkpoint
 from packnet_sfm.utils.logging import print_config
 from packnet_sfm.utils.logging import AvgMeter
 import torch
+from packnet_sfm.utils.image import interpolate_image
 
 
 def sample_to_cuda(data, dtype=None):
@@ -138,6 +139,7 @@ class BaseTrainer:
             # Send samples to GPU and take a training step
             ##############
             # batch['depth'] = None
+            # batch['depth'] = interpolate_image(batch['depth'], (192, 640))
             ##################
 
             batch = sample_to_cuda(batch)
@@ -196,6 +198,8 @@ class BaseTrainer:
                     # end = time.time()
                     # print(end - start)
                 
+                #batch['depth'] = interpolate_image(batch['depth'], (192, 640))
+
                 #############################
 
                 batch = sample_to_cuda(batch)

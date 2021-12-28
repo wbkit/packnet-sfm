@@ -72,6 +72,9 @@ class ModelCheckpoint:
             'state_dict': model.state_dict(),
             'optimizer': model.optimizer.state_dict(),
             'scheduler': model.scheduler.state_dict(),
+            'encoder_state_dict': model.depth_net.encoder.state_dict(),
+            'decoder_state_dict': model.depth_net.decoder.state_dict(),
+            'fusion_state_dict': model.depth_net.fusion_weights.state_dict(),
         }, filepath)
         self._sync_s3(filepath, model)
 
