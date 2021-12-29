@@ -74,7 +74,7 @@ def train(file):
     model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger)
 
     # Create trainer with args.arch parameters
-    trainer = BaseTrainer(**config.arch, checkpoint=checkpoint)
+    trainer = BaseTrainer(**config.arch, checkpoint=checkpoint, **config.proj)
 
     # Train model
     trainer.fit(model_wrapper)

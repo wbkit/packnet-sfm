@@ -182,6 +182,15 @@ cfg.datasets.test.input_depth_type = ['']           # Test input depth type
 cfg.datasets.test.cameras = [[]]                    # Test cameras (double list, one for each dataset)
 cfg.datasets.test.num_logs = 5                      # Number of test images to log
 ########################################################################################################################
+### PROJECT SPECIFIC CONFIGS
+########################################################################################################################
+cfg.proj = CN()
+cfg.proj.filter = CN()
+cfg.proj.filter.type = 'modulo_ch' #'None', 'to_from_ch', 'modulo_ch'
+cfg.proj.filter.from_ch = 35
+cfg.proj.filter.to_ch = 43
+cfg.proj.filter.modulo_value = 2
+########################################################################################################################
 ### THESE SHOULD NOT BE CHANGED
 ########################################################################################################################
 cfg.config = ''                 # Run configuration file

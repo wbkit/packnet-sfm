@@ -10,6 +10,7 @@ from packnet_sfm.utils.logging import print_config
 from packnet_sfm.utils.logging import AvgMeter
 import torch
 from packnet_sfm.utils.image import interpolate_image
+from depth_processing import DepthFilter, plot_depth_map, filter_depth_channels
 
 
 def sample_to_cuda(data, dtype=None):
@@ -37,6 +38,7 @@ class BaseTrainer:
         self.module = None
 
         self.avg_loss = AvgMeter(50)
+        self.filter = kwargs['filter']
 
     @property
     def proc_rank(self):
@@ -132,6 +134,13 @@ class BaseTrainer:
             dataloader, module.config.datasets.train)
         # Start training loop
         outputs = []
+
+        #Bool to check whether depth object has been created
+        if self.filter.type is not 'None':
+            is_created = False
+        else:
+            is_created = True
+
         # For all batches
         for i, batch in progress_bar:
             # Reset optimizer
@@ -140,7 +149,15 @@ class BaseTrainer:
             ##############
             # batch['depth'] = None
             # batch['depth'] = interpolate_image(batch['depth'], (192, 640))
-            ##################
+            ############################
+            # Preprocessing of depth information
+            if is_created is False:
+                    filter_obj = DepthFilter(batch)
+                    is_created = True
+            if self.filter.type == 'to_from_ch':
+                batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
+            if self.filter.type == 'modulo_ch':
+                batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
 
             batch = sample_to_cuda(batch)
             # output = module.training_step(batch, i) # original
@@ -177,15 +194,28 @@ class BaseTrainer:
             progress_bar = self.val_progress_bar(
                 dataloader, module.config.datasets.validation, n)
             outputs = []
+
             #Bool to check whether depth object has been created
-            is_created = False
-            from depth_processing import DepthFilter, plot_depth_map, filter_depth_channels
+            if self.filter.type is not 'None':
+                is_created = False
+            else:
+                is_created = True
+            
 
             # For all batches
             for i, batch in progress_bar:
                 # Send batch to GPU and take a validation step
 
                 ############################
+                # Preprocessing of depth information
+                if is_created is False:
+                        filter_obj = DepthFilter(batch)
+                        is_created = True
+                if self.filter.type == 'to_from_ch':
+                    batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
+                if self.filter.type == 'modulo_ch':
+                    batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
+
                 # if n == 0:
                     # if is_created is False:
                     #     filter_obj = DepthFilter(batch)

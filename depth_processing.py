@@ -45,8 +45,40 @@ class DepthFilter:
         lidar_channel_arr = np.around(theta_norm) 
 
         # Filter
-        #mask_arr = ((depth_map <= 0) | (lidar_channel_arr < from_ch) | (lidar_channel_arr > to_ch))
-        mask_arr = ((depth_map <= 0) | (np.mod(lidar_channel_arr, 2) != 1))
+        mask_arr = ((depth_map <= 0) | (lidar_channel_arr < from_ch) | (lidar_channel_arr > to_ch))
+        depth_map[mask_arr] = 0
+
+        #lidar_channel_arr[mask_arr] = -1
+        #fig, ax = plt.subplots()
+        #ax.imshow(np.mod(lidar_channel_arr[0][0], 5))
+        #plt.show()
+        #plt.savefig('depth_plot_chfilt2.png', dpi=800)
+
+        return depth_map
+
+    def filter_ch_modulo(self, batch, modulo=2):
+        depth_map = batch['input_depth'].numpy()
+
+        z_map = depth_map / np.sqrt(1. + self.x_map**2 + self.y_map**2)
+        #x_map = self.x_map * z_map
+        y_map = self.y_map * z_map
+
+        # prel_mask = (depth_map > 0)
+        theta = np.arcsin(y_map / (depth_map + 1e-5) ) # * prel_mask
+
+        # Get bounds from data
+        theta_min = -0.30 #np.min(theta)
+        theta_max = 0.04 #np.max(theta)
+        # Transform and normalise data
+        # Value range will be from -0.5 to 63.49
+        theta_norm = theta - theta_min
+        theta_max_n = np.max(theta_norm)
+        theta_norm = theta_norm * (63.99 / theta_max_n) - 0.5
+        # Classify by rounding
+        lidar_channel_arr = np.around(theta_norm) 
+
+        # Filter
+        mask_arr = ((depth_map <= 0) | (np.mod(lidar_channel_arr, modulo) != 1))
         depth_map[mask_arr] = 0
 
         #lidar_channel_arr[mask_arr] = -1

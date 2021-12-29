@@ -1,5 +1,5 @@
 arch:
-    validate_first: False   #
+    validate_first: True   #
 model:
     name: 'SemiSupCompletionModel'
     loss:
@@ -50,5 +50,5 @@ datasets:
 checkpoint:
     filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
 wandb: 
-    dry_run: False      #
+    dry_run: True      #
     name: 'SAN_Net_res_small2' #
