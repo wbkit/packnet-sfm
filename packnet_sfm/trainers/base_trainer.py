@@ -136,7 +136,7 @@ class BaseTrainer:
         outputs = []
 
         #Bool to check whether depth object has been created
-        if self.filter.type is not 'None':
+        if self.filter.type is not 'none':
             is_created = False
         else:
             is_created = True
@@ -196,7 +196,7 @@ class BaseTrainer:
             outputs = []
 
             #Bool to check whether depth object has been created
-            if self.filter.type is not 'None':
+            if self.filter.type is not 'none':
                 is_created = False
             else:
                 is_created = True
@@ -208,13 +208,14 @@ class BaseTrainer:
 
                 ############################
                 # Preprocessing of depth information
-                if is_created is False:
-                        filter_obj = DepthFilter(batch)
-                        is_created = True
-                if self.filter.type == 'to_from_ch':
-                    batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
-                if self.filter.type == 'modulo_ch':
-                    batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
+                if 'input_depth' in batch:
+                    if is_created is False:
+                            filter_obj = DepthFilter(batch)
+                            is_created = True
+                    if self.filter.type == 'to_from_ch':
+                        batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
+                    if self.filter.type == 'modulo_ch':
+                        batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
 
                 # if n == 0:
                     # if is_created is False:

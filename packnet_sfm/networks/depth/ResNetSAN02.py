@@ -213,18 +213,19 @@ class ResNetSAN02(nn.Module):
                 param.requires_grad = False
         # output['inv_depths'] = inv_depths_rgb
 
-        if (input_depth is None) or (kwargs['epoch_nr'] < 20):  # Modified
+        if (input_depth is None) or (kwargs['epoch_nr'] < 1):  # Modified
             inv_depths_rgb, _ = self.run_network(rgb, None, **kwargs)
             return {
                 'inv_depths': inv_depths_rgb,
             }
         else:
             inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
+            inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, **kwargs)
+            output['inv_depths'] = inv_depths_rgb
             output['inv_depths_rgbd'] = inv_depths_rgbd
-            output['inv_depths'] = inv_depths_rgbd
-            # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-            #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-            output['depth_loss'] = torch.tensor(0).to('cuda')
+            loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+                        for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+            output['depth_loss'] = 0.3 * loss # torch.tensor(0).to('cuda')
         return output
 
     # def forward(self, rgb, input_depth=None, **kwargs):

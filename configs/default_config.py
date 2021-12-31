@@ -186,7 +186,7 @@ cfg.datasets.test.num_logs = 5                      # Number of test images to l
 ########################################################################################################################
 cfg.proj = CN()
 cfg.proj.filter = CN()
-cfg.proj.filter.type = 'modulo_ch' #'None', 'to_from_ch', 'modulo_ch'
+cfg.proj.filter.type = 'none' #'none', 'to_from_ch', 'modulo_ch'
 cfg.proj.filter.from_ch = 35
 cfg.proj.filter.to_ch = 43
 cfg.proj.filter.modulo_value = 2

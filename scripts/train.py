@@ -58,7 +58,13 @@ def train(file):
     # config.datasets.train['path'] = ['/scratch/wboet/KITTI_raw/']
     # config.datasets.validation['path'] = ['/scratch/wboet/KITTI_raw/', '/scratch/wboet/KITTI_raw/']
     # config.datasets.validation['input_depth_type'] = ['velodyne','']
- 
+    
+    #config2, ckpt2 = parse_train_file('configs/train_packnet_san_kitti.yaml')
+    # config2.proj.filter.type = 'none' #'None', 'to_from_ch', 'modulo_ch'
+    # config2.proj.filter.from_ch = 35
+    # config2.proj.filter.to_ch = 43
+    # config2.proj.filter.modulo_value = 2
+
     # Set debug if requested
     set_debug(config.debug)
 
