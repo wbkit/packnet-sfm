@@ -39,6 +39,7 @@ class BaseTrainer:
 
         self.avg_loss = AvgMeter(50)
         self.filter = kwargs['filter']
+        self.explicit = kwargs['explicit']
 
     @property
     def proc_rank(self):
@@ -146,13 +147,10 @@ class BaseTrainer:
             # Reset optimizer
             optimizer.zero_grad()
             # Send samples to GPU and take a training step
-            ##############
-            # batch['depth'] = None
-            # batch['depth'] = interpolate_image(batch['depth'], (192, 640))
-            ############################
+
             # Preprocessing of depth information
             if is_created is False:
-                    filter_obj = DepthFilter(batch, filter_settings=[1,2,3,4,6,8])
+                    filter_obj = DepthFilter(batch, filter_settings=self.explicit.modulo_arr)
                     is_created = True
             if self.filter.type == 'to_from_ch':
                 batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
@@ -213,7 +211,7 @@ class BaseTrainer:
                 # Preprocessing of depth information
                 if 'input_depth' in batch:
                     if is_created is False:
-                            filter_obj = DepthFilter(batch, filter_settings=[1,2,3,4,6,8])
+                            filter_obj = DepthFilter(batch, filter_settings=self.explicit.modulo_arr)
                             is_created = True
                     if self.filter.type == 'to_from_ch':
                         batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))

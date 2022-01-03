@@ -190,6 +190,15 @@ cfg.proj.filter.type = 'none' #'none', 'to_from_ch', 'modulo_ch'
 cfg.proj.filter.from_ch = 35
 cfg.proj.filter.to_ch = 43
 cfg.proj.filter.modulo_value = 2
+cfg.proj.train = CN()
+cfg.proj.train.start_lidar_epoch=100
+cfg.proj.train.freeze_decoder_epoch=100
+cfg.proj.train.freeze_encoder_epoch=100
+cfg.proj.explicit = CN()
+cfg.proj.explicit.type = 'none' #'none', 'to_from_ch', 'modulo_ch'
+cfg.proj.explicit.modulo_arr = [1,2,3,4,6,8]#[1]
+cfg.proj.explicit.from_ch_arr = [11]
+cfg.proj.explicit.to_ch_arr = [63]
 ########################################################################################################################
 ### THESE SHOULD NOT BE CHANGED
 ########################################################################################################################
