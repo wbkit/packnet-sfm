@@ -52,11 +52,11 @@ datasets:
 checkpoint:
     filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
 wandb: 
-    dry_run: False      #
-    name: 'SAN_Net_res2_ch32' #
+    dry_run: False    #
+    name: 'SAN_Net_res2_mod1_8' #
 proj:
     filter:
-        type: 'to_from_ch'
+        type: 'modulo_ch'
         from_ch: 11
         to_ch: 43
         modulo_value: 8

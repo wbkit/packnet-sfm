@@ -131,6 +131,27 @@ class FusionWeights(nn.Module):
     def forward(self, rgb, input_depth=None, **kwargs):
         return self.weight, self.bias
 
+
+class FusionNetExplicit(nn.Module):
+    def __init__(self, nr_tasks, **kwargs):
+        super().__init__()
+        self.layer1 = nn.Linear(int(nr_tasks), 128)
+        self.act1 = nn.ELU(inplace=True)
+        self.layer2 = nn.Linear(128, 128)
+        self.act2 = nn.ELU(inplace=True)
+        self.out_weight = nn.Linear(128, 4)
+        self.out_bias = nn.Linear(128, 4)
+
+    def forward(self, input_task_vector, **kwargs):
+        l1 = self.layer1(input_task_vector)
+        l1 = self.act1(l1)
+        l2 = self.layer2(l1)
+        l2 = self.act2(l2)
+        output_weight = self.out_weight(l2)
+        output_bias = self.out_bias(l2)
+
+        return output_weight, output_bias
+
 class ResNetSAN02(nn.Module):
     """
     PackNet-SAN network, from the paper (https://arxiv.org/abs/2103.16690)
@@ -168,6 +189,7 @@ class ResNetSAN02(nn.Module):
         #self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
         #self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
         self.fusion_weights = FusionWeights()
+        self.fusion_net = FusionNetExplicit(nr_tasks=6)
 
         self.init_weights()
 
@@ -179,7 +201,7 @@ class ResNetSAN02(nn.Module):
                 if m.bias is not None:
                     m.bias.data.zero_()
 
-    def run_network(self, rgb, input_depth=None, **kwargs):
+    def run_network(self, rgb, input_depth=None, input_task_vect = None, **kwargs):
         """
         Runs the network and returns inverse depth maps
         (4 scales if training and 1 if not).
@@ -187,20 +209,29 @@ class ResNetSAN02(nn.Module):
         x4, skips = self.encoder(rgb)
 
         if input_depth is not None:
+            #input_task_vect = torch.zeros((1,3), device='cuda')
+
             self.mconvs.prep(input_depth)
 
-            skips[1] = skips[1] * self.fusion_weights.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[0].view(1, 1, 1, 1)
-            skips[2] = skips[2] * self.fusion_weights.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[1].view(1, 1, 1, 1)
-            skips[3] = skips[3] * self.fusion_weights.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[2].view(1, 1, 1, 1)
-            # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
-            x4      = x4      * self.fusion_weights.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.fusion_weights.bias[3].view(1, 1, 1, 1)
+            if input_task_vect is None:
+                skips[1] = skips[1] * self.fusion_weights.weight[0].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[0].view(1, 1, 1, 1)
+                skips[2] = skips[2] * self.fusion_weights.weight[1].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[1].view(1, 1, 1, 1)
+                skips[3] = skips[3] * self.fusion_weights.weight[2].view(1, 1, 1, 1) + self.mconvs() + self.fusion_weights.bias[2].view(1, 1, 1, 1)
+                # skips[4] = skips[4] * self.weight[3].view(1, 1, 1, 1) + self.mconvs(skips[4]) + self.bias[3].view(1, 1, 1, 1)
+                x4      = x4      * self.fusion_weights.weight[3].view(1, 1, 1, 1) + self.mconvs()      + self.fusion_weights.bias[3].view(1, 1, 1, 1)
+            else:
+                fusion_weights, fusion_bias = self.fusion_net(input_task_vect)
+                skips[1] = skips[1] * fusion_weights[0][0].view(1, 1, 1, 1) + self.mconvs() + fusion_bias[0][0].view(1, 1, 1, 1)
+                skips[2] = skips[2] * fusion_weights[0][1].view(1, 1, 1, 1) + self.mconvs() + fusion_bias[0][1].view(1, 1, 1, 1)
+                skips[3] = skips[3] * fusion_weights[0][2].view(1, 1, 1, 1) + self.mconvs() + fusion_bias[0][2].view(1, 1, 1, 1)
+                x4      = x4      * fusion_weights[0][3].view(1, 1, 1, 1) + self.mconvs()      + fusion_bias[0][3].view(1, 1, 1, 1)
 
         return self.decoder(x4, skips), skips + [x4]
 
     def forward(self, rgb, input_depth=None, **kwargs):
 
         if not self.training:
-            inv_depths, _ = self.run_network(rgb, input_depth)
+            inv_depths, _ = self.run_network(rgb, input_depth, **kwargs)
             return {
                 'inv_depths': inv_depths,
             }
@@ -208,24 +239,30 @@ class ResNetSAN02(nn.Module):
         output = {}
 
         # Freeze encoder after 20th epoch
-        if (kwargs['epoch_nr'] == 20):
+        if (kwargs['epoch_nr'] == 0):                        # Modified
             for param in self.encoder.parameters():
                 param.requires_grad = False
         # output['inv_depths'] = inv_depths_rgb
 
-        if (input_depth is None) or (kwargs['epoch_nr'] < 1):  # Modified
+        if (input_depth is None) or (kwargs['epoch_nr'] < 0):  # Modified
             inv_depths_rgb, _ = self.run_network(rgb, None, **kwargs)
             return {
                 'inv_depths': inv_depths_rgb,
             }
         else:
-            inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
-            inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, **kwargs)
-            output['inv_depths'] = inv_depths_rgb
+            # inv_depths_rgbd, skip_feat_rgbd = self.run_network(rgb, input_depth, **kwargs)
+            # inv_depths_rgb, skip_feat_rgb = self.run_network(rgb, **kwargs)
+            # output['inv_depths'] = inv_depths_rgb
+            # output['inv_depths_rgbd'] = inv_depths_rgbd
+
+            inv_depths_rgbd, _ = self.run_network(rgb, input_depth, **kwargs)
+            output['inv_depths'] = inv_depths_rgbd
             output['inv_depths_rgbd'] = inv_depths_rgbd
-            loss = sum([((srgbd.detach() - srgb) ** 2).mean()
-                        for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
-            output['depth_loss'] = 0.3 * loss # torch.tensor(0).to('cuda')
+
+            # loss = sum([((srgbd.detach() - srgb) ** 2).mean()
+            #             for srgbd, srgb in zip(skip_feat_rgbd, skip_feat_rgb)]) / len(skip_feat_rgbd)
+            # output['depth_loss'] = 0.3 * loss # torch.tensor(0).to('cuda')
+            output['depth_loss'] = torch.tensor(0).to('cuda') #loss
         return output
 
     # def forward(self, rgb, input_depth=None, **kwargs):

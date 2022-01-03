@@ -194,9 +194,9 @@ class ModelWrapper(torch.nn.Module):
             'metrics': output['metrics']
         }
 
-    def validation_step(self, batch, *args):
+    def validation_step(self, batch, *args, **kwargs):
         """Processes a validation batch."""
-        output = self.evaluate_depth(batch)
+        output = self.evaluate_depth(batch, **kwargs)
         if self.logger:
             self.logger.log_depth('val', batch, output, args,
                                   self.validation_dataset, world_size(),
@@ -293,17 +293,17 @@ class ModelWrapper(torch.nn.Module):
         assert self.pose_net is not None, 'Pose network not defined'
         return self.pose_net(*args, **kwargs)
 
-    def evaluate_depth(self, batch):
+    def evaluate_depth(self, batch, **kwargs):
         """Evaluate batch to produce depth metrics."""
         # Get predicted depth
-        inv_depths = self.model(batch)['inv_depths']
+        inv_depths = self.model(batch, **kwargs)['inv_depths']
         depth = inv2depth(inv_depths[0])
         # depth = inv2depth(inv_depths)
         # Post-process predicted depth
         batch['rgb'] = flip_lr(batch['rgb'])
         if 'input_depth' in batch:
             batch['input_depth'] = flip_lr(batch['input_depth'])
-        inv_depths_flipped = self.model(batch)['inv_depths']
+        inv_depths_flipped = self.model(batch, **kwargs)['inv_depths']
         inv_depth_pp = post_process_inv_depth(
            inv_depths[0], inv_depths_flipped[0], method='mean')
         #inv_depth_pp = post_process_inv_depth(
