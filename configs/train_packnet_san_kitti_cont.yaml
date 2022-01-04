@@ -1,5 +1,5 @@
 arch:
-    validate_first: False  #
+    validate_first: True  #
     max_epochs: 16
 model:
     name: 'SemiSupCompletionModel'
@@ -52,7 +52,7 @@ datasets:
 checkpoint:
     filepath: '/scratch_net/biwidl213/wboettcher/Checkpoints'
 wandb: 
-    dry_run: False    #
+    dry_run: True    #
     name: 'SAN_Net_res2_mod1_8' #
 proj:
     filter:
@@ -60,3 +60,9 @@ proj:
         from_ch: 11
         to_ch: 43
         modulo_value: 8
+    explicit:
+        type: 'none'
+        modulo_arr: [1,2,4]
+    train:
+        start_lidar_epoch: 1
+        freeze_encoder_epoch: 1

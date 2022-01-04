@@ -77,7 +77,7 @@ def train(file):
         filter_args_create(ModelCheckpoint, config.checkpoint)
 
     # Initialize model wrapper
-    model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger)
+    model_wrapper = ModelWrapper(config, resume=ckpt, logger=logger, **config.proj)
 
     # Create trainer with args.arch parameters
     trainer = BaseTrainer(**config.arch, checkpoint=checkpoint, **config.proj)

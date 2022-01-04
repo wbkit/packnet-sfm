@@ -167,7 +167,7 @@ class ResNetSAN02(nn.Module):
     kwargs : dict
         Extra parameters
     """
-    def __init__(self, dropout=None, version=None, **kwargs):
+    def __init__(self, dropout=None, version=None, explicit=None, train=None):
         super().__init__()
         self.version = version[1:]
         # Input/output channels
@@ -189,7 +189,15 @@ class ResNetSAN02(nn.Module):
         #self.weight = torch.nn.parameter.Parameter(torch.ones(4), requires_grad=True)
         #self.bias = torch.nn.parameter.Parameter(torch.zeros(4), requires_grad=True)
         self.fusion_weights = FusionWeights()
-        self.fusion_net = FusionNetExplicit(nr_tasks=6)
+        if explicit != None:
+            nr_tasks = len(explicit.modulo_arr)
+            self.fusion_net = FusionNetExplicit(nr_tasks=nr_tasks)
+        if train != None:
+            self.start_lidar_epoch = train.start_lidar_epoch
+            self.freeze_encoder_epoch = train.freeze_encoder_epoch
+        else:
+            self.start_lidar_epoch = 1000
+            self.freeze_encoder_epoch = 1000     
 
         self.init_weights()
 
@@ -239,12 +247,12 @@ class ResNetSAN02(nn.Module):
         output = {}
 
         # Freeze encoder after 20th epoch
-        if (kwargs['epoch_nr'] == 0):                        # Modified
+        if (kwargs['epoch_nr'] == self.freeze_encoder_epoch):                        # Modified
             for param in self.encoder.parameters():
                 param.requires_grad = False
         # output['inv_depths'] = inv_depths_rgb
 
-        if (input_depth is None) or (kwargs['epoch_nr'] < 0):  # Modified
+        if (input_depth is None) or (kwargs['epoch_nr'] < self.start_lidar_epoch):  # Modified
             inv_depths_rgb, _ = self.run_network(rgb, None, **kwargs)
             return {
                 'inv_depths': inv_depths_rgb,

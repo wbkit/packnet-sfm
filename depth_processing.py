@@ -103,7 +103,13 @@ class DepthFilter:
         filter_mod_value = self.filter_settings[index]
 
         # Apply filter
-        output_batch = self.filter_ch_modulo(batch, modulo=filter_mod_value)
+        if filter_mod_value == 1:
+            output_batch = batch['input_depth'].numpy()
+        if filter_mod_value == 0:
+            output_batch = batch['input_depth'].numpy()
+            output_batch = 0
+        else:
+            output_batch = self.filter_ch_modulo(batch, modulo=filter_mod_value)
 
         return output_batch, task_vect
 

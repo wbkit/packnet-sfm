@@ -32,7 +32,7 @@ class ModelWrapper(torch.nn.Module):
         Model configuration (cf. configs/default_config.py)
     """
 
-    def __init__(self, config, resume=None, logger=None, load_datasets=True):
+    def __init__(self, config, resume=None, logger=None, load_datasets=True, **kwargs):
         super().__init__()
 
         # Store configuration, checkpoint and logger
@@ -54,7 +54,7 @@ class ModelWrapper(torch.nn.Module):
         self.current_epoch = 0
 
         # Prepare model
-        self.prepare_model(resume)
+        self.prepare_model(resume, **kwargs)
 
         # Prepare datasets
         if load_datasets:
@@ -66,10 +66,10 @@ class ModelWrapper(torch.nn.Module):
         # Preparations done
         self.config.prepared = True
 
-    def prepare_model(self, resume=None):
+    def prepare_model(self, resume=None, **kwargs):
         """Prepare self.model (incl. loading previous state)"""
         print0(pcolor('### Preparing Model', 'green'))
-        self.model = setup_model(self.config.model, self.config.prepared)
+        self.model = setup_model(self.config.model, self.config.prepared, **kwargs)
         # Resume model if available
         if resume:
             print0(pcolor('### Resuming from {}'.format(
@@ -468,7 +468,7 @@ def setup_model(config, prepared, **kwargs):
         **{**config.loss, **kwargs})
     # Add depth network if required
     if 'depth_net' in model.network_requirements:
-        model.add_depth_net(setup_depth_net(config.depth_net, prepared))
+        model.add_depth_net(setup_depth_net(config.depth_net, prepared, **kwargs))
     # Add pose network if required
     if 'pose_net' in model.network_requirements:
         model.add_pose_net(setup_pose_net(config.pose_net, prepared))

@@ -152,17 +152,22 @@ class BaseTrainer:
             if is_created is False:
                     filter_obj = DepthFilter(batch, filter_settings=self.explicit.modulo_arr)
                     is_created = True
-            if self.filter.type == 'to_from_ch':
-                batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
-            if self.filter.type == 'modulo_ch':
-                #batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
-                filtered_Depth, task_vector = filter_obj.filter_batch_modulo(batch)
-                batch['input_depth'] = torch.from_numpy(filtered_Depth)
-                # Add vector here
+            if self.explicit.type != 'none':
+                if self.explicit.type == 'modulo_ch':
+                    filtered_Depth, task_vector = filter_obj.filter_batch_modulo(batch)
+                    batch['input_depth'] = torch.from_numpy(filtered_Depth)
+                task_vect = torch.from_numpy(task_vector).to('cuda')
+            else:
+                task_vect = None
+                if self.filter.type != 'none':
+                    if self.filter.type == 'to_from_ch':
+                        batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
+                    if self.filter.type == 'modulo_ch':
+                        batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
 
             batch = sample_to_cuda(batch)
             # output = module.training_step(batch, i) # original
-            output = module.training_step(batch, i, input_task_vect=torch.from_numpy(task_vector).to('cuda'), **kwargs) # new to propagate the epoch
+            output = module.training_step(batch, i, input_task_vect=task_vect, **kwargs) # new to propagate the epoch
             # Backprop through loss and take an optimizer step
             output['loss'].backward()
             optimizer.step()
@@ -197,7 +202,7 @@ class BaseTrainer:
             outputs = []
 
             #Bool to check whether depth object has been created
-            if self.filter.type is not 'none':
+            if (self.filter.type != 'none') | (self.explicit.type != 'none'):
                 is_created = False
             else:
                 is_created = True
@@ -209,17 +214,24 @@ class BaseTrainer:
 
                 ############################
                 # Preprocessing of depth information
-                if 'input_depth' in batch:
+                if 'input_depth' in batch.keys():
                     if is_created is False:
-                            filter_obj = DepthFilter(batch, filter_settings=self.explicit.modulo_arr)
-                            is_created = True
-                    if self.filter.type == 'to_from_ch':
-                        batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
-                    if self.filter.type == 'modulo_ch':
-                        #batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
-                        filtered_Depth, task_vector = filter_obj.filter_batch_modulo(batch)
-                        batch['input_depth'] = torch.from_numpy(filtered_Depth)
-                        # Add vector here
+                        filter_obj = DepthFilter(batch, filter_settings=self.explicit.modulo_arr)
+                        is_created = True
+                    if self.explicit.type != 'none':
+                        if self.explicit.type == 'modulo_ch':
+                            filtered_Depth, task_vector = filter_obj.filter_batch_modulo(batch)
+                            batch['input_depth'] = torch.from_numpy(filtered_Depth)
+                        task_vect = torch.from_numpy(task_vector).to('cuda')
+                    else:
+                        task_vect = None
+                        if self.filter.type != 'none':
+                            if self.filter.type == 'to_from_ch':
+                                batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_from_to(batch, from_ch=self.filter.from_ch, to_ch=self.filter.to_ch))
+                            if self.filter.type == 'modulo_ch':
+                                batch['input_depth'] = torch.from_numpy(filter_obj.filter_ch_modulo(batch, modulo=self.filter.modulo_value))
+                else:
+                    task_vect = None
 
                 # if n == 0:
                     # if is_created is False:
@@ -238,7 +250,7 @@ class BaseTrainer:
                 #############################
 
                 batch = sample_to_cuda(batch)
-                output = module.validation_step(batch, i, n, input_task_vect=torch.from_numpy(task_vector).to('cuda'))
+                output = module.validation_step(batch, i, n, input_task_vect=task_vect)
                 # Append output to list of outputs
                 outputs.append(output)
             # Append dataset outputs to list of all outputs
